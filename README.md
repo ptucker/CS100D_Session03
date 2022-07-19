@@ -202,61 +202,66 @@ And then replace the `0` with `{display}` to use the display value in the `displ
 <td colspan="5"><span className="display" id="display">{display}</span></td>
 ```
 
-Here's our first function, `number_click`:
+Here's our first function, `numberClick`. I put it right below the `constructor`:
 
 ```
-<script lang="javascript">
-    function number_click(btn) {
-        var num = btn.innerHTML
-        var disp = document.getElementById('display')
-        if (parseInt(disp.innerHTML) == 0 || isNaN(parseInt(disp.innerHTML)))
-            disp.innerHTML = ''
-        disp.innerHTML = disp.innerHTML + num
+    numberClick(event) {
+        const { display } = this.state
+        const val = event.target.value
+        var newdisplay
+        if (display === "0")
+            newdisplay = val
+        else
+            newdisplay = display + val
+        this.setState({...this.state, display: newdisplay})
     }
-</script>
 ```
 
-In this case, `number_click` takes an argument `btn`, which will be the button that was clicked. We'll get the contents of that button, which is the number displayed, and append it to what's already in the display. If the display contains 0, or some non-number, we'll clear the display before appending the number.
+In this case, `numberClick` takes an argument `btn`, which repreents the click event. We'll get the `value` attribute of the button that caused the event, which is the number displayed, and append it to what's already in the display. If the display contains 0, or some non-number, we'll clear the display before appending the number.
 
-Now we need to tell the number buttons to call our function. We'll use the `this` keyword to refer to the button that was clicked:
+Now we need to tell the number buttons to call our function in the `render` method. As we did with `incrementCount` above, we'll bind `this` to the function call at the beginning of `render`:
 
 ```
-<td><button class="number" onclick="number_click(this)">7</button></td>
-<td><button class="number" onclick="number_click(this)">8</button></td>
-<td><button class="number" onclick="number_click(this)">9</button></td>
+const numberClick = this.numberClick.bind(this)
+```
+
+Then we'll update each of our number buttons:
+
+```
+<td><button className="number" onClick={numberClick} value='7'>7</button></td>
+<td><button className="number" onClick={numberClick} value='8'>8</button></td>
+<td><button className="number" onClick={numberClick} value='9'>9</button></td>
 ```
 
 ### Checkpoint
 
 1. Take the above example and update all 10 number buttons, then test to make sure it's working.
-2. Make a function called `ce_click` in the `<head>` tag to handle the `CE` button. That's pretty straight-forward: If that's clicked, change what's in `display` to `0`. **Note #1:** This function won't need an argument, and you won't need to pass `this` to it. **Note #2:** We'll need to make more changes to this later.
+2. Make a function called `ceClick` to handle the `CE` button. That's pretty straight-forward: If that's clicked, change what's in `display` to `0`.
 
-All right, let's hook up the arithmetic operator buttons. Think about how a calculator operates. You type in the first number. When you hit an operator button, the number in the display has to be stored as well as the operator, then the display is cleared for the next number. So we'll need two variables, one for the number (that will be on the left-hand side of the equation) and the operator. These will go in the `<head>` tag, above the functions:
-
-```
-<script lang="javascript">
-    var leftnum = 0
-    var op = '+'
-
-...
-</script>
-```
-
-And here's code for `op_click`:
+All right, let's hook up the arithmetic operator buttons. Think about how a calculator operates. You type in the first number. When you hit an operator button, the number in the display has to be stored as well as the operator, then the display is cleared for the next number. So we'll add two variables to state, one for the number (that will be on the left-hand side of the equation) and the operator:
 
 ```
-    function op_click(btn) {
-        var disp = document.getElementById('display')
-        leftnum = parseInt(disp.innerHTML)
-        op = btn.innerHTML
-        disp.innerHTML = '0'
-    }
+constructor() {
+    super()
+    this.state = {display: '0', leftnum: 0, op: ''}
+}
 ```
 
-We first grab the number out of the display, and convert it from a string type to an integer, then store it in our `leftnum` variable so we can use it later (when the user hits `=`). Then we grab the inner HTML for the button that was clicked, then clear out the display. You'll also need to update the `onclick` event attributes for the operator buttons:
+And here's code for `opClick`:
 
 ```
-<td><button class="op" onclick="op_click(this)">/</button></td>
+opClick(event) {
+    const { display } = this.state
+    const leftnum = parseInt(display)
+    const op = event.target.value
+    this.setState({...this.state, display: '0', leftnum: leftnum, op: op})
+}
+```
+
+We first grab the number out of the display, and convert it from a string type to an integer, then store it in our `leftnum` variable so we can use it later (when the user hits `=`). Then we grab the value for the button that was clicked, then clear out the display. You'll also need to update the `onclick` event attributes and the `value` attributes for the operator buttons:
+
+```
+<td><button className="op" onClick={opClick} value='/'>/</button></td>
 ```
 
 ### Checkpoint
@@ -266,31 +271,30 @@ We first grab the number out of the display, and convert it from a string type t
 Whew, we're almost there. We finally need to hook up the `=` button. When that's clicked, if we have a value in `op`, then there's work to do. We need to do the appropriate operation with what's in `leftnum` and what's in the display, then update the display and clear out the `op` variable.
 
 ```
-    function eq_click() {
-        if (op != '') {
-            var disp = document.getElementById('display')
-            var rightnum = parseInt(disp.innerHTML)
-            var res = 0
-            if (op == '+')
-                res = leftnum + rightnum
-            else if (op == '-')
-                res = leftnum - rightnum
-            else if (op == '*')
-                res = leftnum * rightnum
-            else if (op == '/')
-                res = leftnum / rightnum
+eqClick() {
+    const {leftnum, op, display } = this.state
+    if (op !== '') {
+        const rightnum = parseInt(display)
+        var res = 0
+        if (op === '+')
+            res = leftnum + rightnum
+        else if (op === '-')
+            res = leftnum - rightnum
+        else if (op === '*')
+            res = leftnum * rightnum
+        else if (op === '/')
+            res = leftnum / rightnum
 
-            disp.innerHTML = res.toString()
-            op = ''
-        }
+        this.setState({...this.state, display: res.toString(), leftnum: 0, op: ''})
     }
+}
 ```
 
 **Note:** You'll want to clear out the `op` variable in your click function for `CE`.
 
 ### Checkpoint
 
-1. Add the `onclick` attribute to the `=` button to call `eq_click` then test all four operators.
+1. Add the `onclick` attribute to the `=` button to call `eqElick` then test all four operators.
 
 
 ## Wrapping it up
@@ -298,4 +302,5 @@ Whew, we're almost there. We finally need to hook up the `=` button. When that's
 
 ## For next week
 
-HTML and CSS are cool, and there's so much more. Spend time with the [W3Schools HTML Reference](https://www.w3schools.com/tags/default.asp) and the [W3Schools CSS Reference](https://www.w3schools.com/cssref/default.asp) to explore more. We'll start [JavaScript programming](https://www.w3schools.com/js/default.asp) next week. JavaScript will feel similar to Python, though maybe easier, and will allow us to make our web pages interactive.
+React is really cool and really popular, and there's so much more. Find other React tutorials, including the one on the [official React site](https://reactjs.org/tutorial/tutorial.html), to explore more. We're getting back into Python next week, and writing code that will run on a web server, rather than in a web browser. Think about it this way -- When you log into Amazon, you get an HTML page with JavaScript running. But Amazon also has to get data out of it's database, running on a server, to give you personalized content. Next week we'll write that server-side code, and then create a React app to fetch data from that server-side code. We'll use a framework called [Flask](https://www.fullstackpython.com/flask.html) to manage our server code.
+
